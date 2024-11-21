@@ -48,12 +48,13 @@ def login():
 
         if server.validate_user(username, hashed_password):
             if server.validate_otp_and_update(username):
-                flash(f'Welcome, {username}!', 'success')
                 return redirect(url_for('welcome', username=username))
             else:
-                return 'OTP validation failed.', 'error'
+                error_message = 'OTP validation failed.', 'error'
+                return render_template('login.html', error_message=error_message)
         else:
-            return 'Invalid credentials. Please check your username and password.', 'error'
+            error_message = 'Invalid credentials. Please check your username and password.'
+            return render_template('login.html', error_message=error_message)
 
     return render_template('login.html')
 
@@ -64,7 +65,6 @@ def welcome():
     username = request.args.get('username')
 
     if not username:
-        flash('Unauthorized access. Please log in.', 'error')
         return redirect(url_for('login'))
 
     return render_template('welcome.html', username=username)

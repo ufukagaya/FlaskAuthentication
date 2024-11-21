@@ -34,12 +34,12 @@ class Server:
                     return True
         return False
 
-    def generate_otp(self, username):
-        seed = hashlib.sha256(username.encode()).hexdigest()
+    def generate_otp(self, password):
+        seed = hashlib.sha256(password.encode()).hexdigest()
         otp = self.generate_hash_chain(seed, 100)
         return otp[0]
 
-    def validate_otp_and_update(self, username):
+    def validate_otp_and_update(self, password):
         with open("database.txt", "r") as file:
             lines = file.readlines()
 
@@ -49,10 +49,10 @@ class Server:
                 decrypted_data = self.decrypt_data(line.strip())
                 db_username, db_password, db_otp, counter = decrypted_data.split(';')
 
-                if db_username == username:
+                if db_username == password:
                     new_otp = self.generate_hash_chain(db_otp, 1)[0]
                     new_counter = int(counter) + 1
-                    encrypted_data = self.encrypt_data(f"{username};{db_password};{new_otp};{new_counter}")
+                    encrypted_data = self.encrypt_data(f"{password};{db_password};{new_otp};{new_counter}")
                     file.write(encrypted_data + '\n')
                     updated = True
                 else:
