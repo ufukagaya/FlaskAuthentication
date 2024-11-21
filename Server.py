@@ -12,7 +12,8 @@ class Server:
     def register_user(self, username, hashed_password, otp):
         if self.validate_user(username, hashed_password):
             return False
-        encrypted_data = self.encrypt_data(f"{username};{hashed_password};{otp}")
+        counter = 0
+        encrypted_data = self.encrypt_data(f"{username};{hashed_password};{otp};{counter}")
         with open("database.txt", "a") as file:
             file.write(encrypted_data + '\n')
 
@@ -20,15 +21,15 @@ class Server:
         with open("database.txt", "r") as file:
             for line in file:
                 decrypted_data = self.decrypt_data(line.strip())
+                print(f"Decrypted Data: {decrypted_data}")
                 fields = decrypted_data.split(';')
 
-                # Satır formatını kontrol et
                 if len(fields) != 4:
-                    print(f"Invalid line format: {decrypted_data}")  # Hatalı satırı loglayabilirsiniz
+                    print(f"Invalid line format: {decrypted_data}")
                     continue
 
                 db_username, db_password, db_otp, counter = fields
-
+                print(f"Comparing {db_username} with {username} and {db_password} with {hashed_password}")
                 if db_username == username and db_password == hashed_password:
                     return True
         return False
@@ -46,11 +47,12 @@ class Server:
         with open("database.txt", "w") as file:
             for line in lines:
                 decrypted_data = self.decrypt_data(line.strip())
-                db_username, db_password, db_otp = decrypted_data.split(';')
+                db_username, db_password, db_otp, counter = decrypted_data.split(';')
 
                 if db_username == username:
                     new_otp = self.generate_hash_chain(db_otp, 1)[0]
-                    encrypted_data = self.encrypt_data(f"{username};{db_password};{new_otp}")
+                    new_counter = int(counter) + 1
+                    encrypted_data = self.encrypt_data(f"{username};{db_password};{new_otp};{new_counter}")
                     file.write(encrypted_data + '\n')
                     updated = True
                 else:

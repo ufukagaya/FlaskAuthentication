@@ -73,6 +73,11 @@
     button:hover {
         background-color: #45a049;
     }
+    .error-message {
+        color: red;
+        font-size: 14px;
+        margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -86,6 +91,11 @@
   <div class="form-div">
       <div class="register-form">
           <h2>Register</h2>
+          {% if error_message %}
+            <div class="error-message">
+                <p>{{ error_message }}</p>
+            </div>
+          {% endif %}
           <form method="POST">
               <input type="text" name="username" placeholder="Username" required><br>
               <input type="password" name="password" placeholder="Password" required><br>

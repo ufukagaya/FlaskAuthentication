@@ -15,26 +15,26 @@ def register():
         confirm_password = request.form['confirm_password']
 
         if not username or not password or not confirm_password:
-            flash('All fields are required.', 'error')
-            return render_template('register.html')
+            error_message = 'All fields are required.'
+            return render_template('register.html', error_message=error_message)
 
         if password != confirm_password:
-            flash("Passwords do not match. Please try again.", "error")
-            return render_template('register.html')
+            error_message = 'Passwords do not match. Please try again.'
+            return render_template('register.html', error_message=error_message)
 
         if len(password) < 6:
-            flash("Password must be longer than 6 characters.", "error")
-            return render_template('register.html')
+            error_message = 'Password must be longer than 6 characters.'
+            return render_template('register.html', error_message=error_message)
 
         if not password.isalnum():
-            flash("Password cannot contain special characters.", "error")
-            return render_template('register.html')
+            error_message = 'Password cannot contain special characters.'
+            return render_template('register.html', error_message=error_message)
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
         otp = server.generate_otp(username)
         server.register_user(username, hashed_password, otp)
 
-        flash('Registration successful', 'success')
-        return redirect(url_for('login'))
+        error_message = 'Registration successful'
+        return render_template('register.html', error_message=error_message)
 
     return render_template('register.html')
 
@@ -51,9 +51,9 @@ def login():
                 flash(f'Welcome, {username}!', 'success')
                 return redirect(url_for('welcome', username=username))
             else:
-                flash('OTP validation failed.', 'error')
+                return 'OTP validation failed.', 'error'
         else:
-            flash('Invalid credentials. Please check your username and password.', 'error')
+            return 'Invalid credentials. Please check your username and password.', 'error'
 
     return render_template('login.html')
 
