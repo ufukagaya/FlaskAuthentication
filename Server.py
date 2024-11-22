@@ -31,7 +31,7 @@ class Server:
     def generate_otp(self, password):
         seed = hashlib.sha256(password.encode()).hexdigest()
         otp = self.generate_hash_chain(seed, 100)
-        return otp[0]
+        return otp[-1]
 
     def validate_otp_and_update(self, username):
         database_lines = []
@@ -44,19 +44,18 @@ class Server:
                     counter = int(user_data[3])
 
                     print(f"Current OTP: {current_otp}, Counter: {counter}")
-                    print("counter - 1: " + self.generate_hash_element(user_data[1], counter - 1))
+                    print("Next: " + self.generate_hash_element(user_data[1], 100 - counter))
 
-                    if current_otp == self.generate_hash_element(user_data[1], counter - 1):
-                        new_otp = self.generate_hash_element(user_data[1], counter)
+                    if current_otp == self.generate_hash_element(user_data[1], 100 - counter + 1):
+                        new_otp = self.generate_hash_element(user_data[1], 100 - counter)
                         print(f"New OTP: {new_otp}")
                         seed = user_data[1]
                         otp_chain = [seed]
                         #for debug
-                        for i in range(counter):
+                        for i in range(100):
                             seed = SHA256.new(seed.encode()).hexdigest()
                             otp_chain.append(seed)
-                            print(f"index {i + 1}: {seed}")
-
+                        print(otp_chain[100-counter])
                         new_counter = counter + 1
                         updated_data = f"{username};{user_data[1]};{new_otp};{new_counter}"
                         encrypted_line = self.encrypt_data(updated_data)
