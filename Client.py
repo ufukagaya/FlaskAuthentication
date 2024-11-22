@@ -30,7 +30,7 @@ def register():
             error_message = 'Password cannot contain special characters.'
             return render_template('register.html', error_message=error_message)
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        otp = server.generate_otp(username)
+        otp = server.generate_otp(password)
         server.register_user(username, hashed_password, otp)
 
         error_message = 'Registration successful'
@@ -50,7 +50,7 @@ def login():
             if server.validate_otp_and_update(username):
                 return redirect(url_for('welcome', username=username))
             else:
-                error_message = 'OTP validation failed.', 'error'
+                error_message = 'OTP validation failed.'
                 return render_template('login.html', error_message=error_message)
         else:
             error_message = 'Invalid credentials. Please check your username and password.'
