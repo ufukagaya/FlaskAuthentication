@@ -12,7 +12,7 @@ class Server:
     def register_user(self, username, hashed_password, otp):
         if self.validate_user(username, hashed_password):
             return False
-        counter = 0
+        counter = 1
         encrypted_data = self.encrypt_data(f"{username};{hashed_password};{otp};{counter}")
         with open("database.txt", "a") as file:
             file.write(encrypted_data + '\n')
@@ -21,43 +21,57 @@ class Server:
         with open("database.txt", "r") as file:
             for line in file:
                 decrypted_data = self.decrypt_data(line.strip())
-                print(f"Decrypted Data: {decrypted_data}")
                 fields = decrypted_data.split(';')
 
-                if len(fields) != 4:
-                    print(f"Invalid line format: {decrypted_data}")
-                    continue
-
                 db_username, db_password, db_otp, counter = fields
-                print(f"Comparing {db_username} with {username} and {db_password} with {hashed_password}")
                 if db_username == username and db_password == hashed_password:
                     return True
         return False
 
-    def generate_otp(self, username):
-        seed = hashlib.sha256(username.encode()).hexdigest()
+    def generate_otp(self, password):
+        seed = hashlib.sha256(password.encode()).hexdigest()
         otp = self.generate_hash_chain(seed, 100)
         return otp[0]
 
     def validate_otp_and_update(self, username):
+        database_lines = []
         with open("database.txt", "r") as file:
-            lines = file.readlines()
+            for line in file:
+                decrypted_line = self.decrypt_data(line.strip())
+                user_data = decrypted_line.split(";")
+                if user_data[0] == username:
+                    current_otp = user_data[2]
+                    counter = int(user_data[3])
 
-        updated = False
-        with open("database.txt", "w") as file:
-            for line in lines:
-                decrypted_data = self.decrypt_data(line.strip())
-                db_username, db_password, db_otp, counter = decrypted_data.split(';')
+                    print(f"Current OTP: {current_otp}, Counter: {counter}")
+                    print("counter - 1: " + self.generate_hash_element(user_data[1], counter - 1))
 
-                if db_username == username:
-                    new_otp = self.generate_hash_chain(db_otp, 1)[0]
-                    new_counter = int(counter) + 1
-                    encrypted_data = self.encrypt_data(f"{username};{db_password};{new_otp};{new_counter}")
-                    file.write(encrypted_data + '\n')
-                    updated = True
+                    if current_otp == self.generate_hash_element(user_data[1], counter - 1):
+                        new_otp = self.generate_hash_element(user_data[1], counter)
+                        print(f"New OTP: {new_otp}")
+                        seed = user_data[1]
+                        otp_chain = [seed]
+                        #for debug
+                        for i in range(counter):
+                            seed = SHA256.new(seed.encode()).hexdigest()
+                            otp_chain.append(seed)
+                            print(f"index {i + 1}: {seed}")
+
+                        new_counter = counter + 1
+                        updated_data = f"{username};{user_data[1]};{new_otp};{new_counter}"
+                        encrypted_line = self.encrypt_data(updated_data)
+                        print(f"Updated data: {updated_data}")
+                    else:
+                        return False
                 else:
-                    file.write(line)
-        return updated
+                    encrypted_line = line.strip()
+
+                database_lines.append(encrypted_line)
+
+        with open("database.txt", "w") as file:
+            for line in database_lines:
+                file.write(line + "\n")
+        return True
 
     def generate_hash_chain(self, seed, n):
         chain = [seed]
@@ -65,6 +79,13 @@ class Server:
             hash_obj = SHA256.new(chain[-1].encode())
             chain.append(hash_obj.hexdigest())
         return chain
+
+    def generate_hash_element(self, seed, index):
+        element = seed
+        for _ in range(index):
+            hash_obj = SHA256.new(element.encode())
+            element = hash_obj.hexdigest()
+        return element
 
     def encrypt_data(self, data):
         cipher = PKCS1_OAEP.new(self.public_key)
