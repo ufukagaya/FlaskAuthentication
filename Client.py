@@ -22,7 +22,7 @@ def register():
             error_message = 'Passwords do not match. Please try again.'
             return render_template('register.html', error_message=error_message)
 
-        if len(password) < 6:
+        if len(password) <= 6:
             error_message = 'Password must be longer than 6 characters.'
             return render_template('register.html', error_message=error_message)
 

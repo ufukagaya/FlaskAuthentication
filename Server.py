@@ -3,8 +3,8 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHA256
 import hashlib
 
-
 n = 100;
+
 class Server:
     def __init__(self):
         self.private_key = RSA.import_key(open("private.pem").read())
@@ -45,23 +45,16 @@ class Server:
                     current_otp = user_data[2]
                     counter = int(user_data[3])
 
-                    print(f"Current OTP: {current_otp}, Counter: {counter}")
-                    print("Next: " + self.generate_hash_element(user_data[1], n - (counter%n)))
-
                     if current_otp == self.generate_hash_element(user_data[1], n - (counter - 1) % n):
                         new_otp = self.generate_hash_element(user_data[1], n - (counter%n))
-                        print(f"New OTP: {new_otp}")
-                        seed = user_data[1]
-                        otp_chain = [seed]
-                        #for debug
-                        for i in range(n):
-                            seed = SHA256.new(seed.encode()).hexdigest()
-                            otp_chain.append(seed)
-                        print(otp_chain[n-counter])
                         new_counter = counter + 1
                         updated_data = f"{username};{user_data[1]};{new_otp};{new_counter}"
+
+                        if new_counter > 10:
+                            new_otp = self.generate_hash_element(user_data[1], 0)
+                            updated_data = f"{username};{user_data[1]};{new_otp};1"
+
                         encrypted_line = self.encrypt_data(updated_data)
-                        print(f"Updated data: {updated_data}")
                     else:
                         return False
                 else:
